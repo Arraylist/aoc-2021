@@ -1,3 +1,5 @@
+#![attribute_name(drain_filter)]
+
 [package]
 name = "three"
 version = "0.1.0"
