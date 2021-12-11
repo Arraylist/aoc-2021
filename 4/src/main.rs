@@ -50,11 +50,12 @@ fn main() {
         mark_boards.push(mark_board);
     }
 
-    println!("{}", part_1(&boards, &mut mark_boards, numbers));
+    println!("{}", part_1(&boards, &mut mark_boards, numbers).0);
+    println!("{}", part_2(&boards, &mut mark_boards, numbers));
 }
 
 
-fn part_1(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, numbers: Vec<u32>) -> u32 {
+fn part_1(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, numbers: Vec<u32>) -> (u32, usize, usize) {
     let mut win_board: Vec<Vec<u32>> = vec![
         Vec::with_capacity(5),
         Vec::with_capacity(5),
@@ -73,7 +74,9 @@ fn part_1(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, nu
     let mut sum_unmarked: u32 = 0;
     let mut near_finishes: Vec<(usize, usize, usize)> = Vec::with_capacity(5 * 5 * boards.len());
     let mut location: (usize, usize) = (0, 0);
-    for n in numbers {
+    let mut win_board_idx: usize = 0;
+    let mut bingo_idx: usize = 0;
+    for (nn, n) in numbers.into_iter().enumerate() {
         if bingo_nbr > 0 {
             break;
         }
@@ -106,6 +109,8 @@ fn part_1(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, nu
                         }
                     }
                     bingo_nbr = win_board[location.0][location.1];
+                    bingo_idx = nn;
+                    win_board_idx = i;
                     break;
                 }
 
@@ -153,7 +158,26 @@ fn part_1(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, nu
         }
     }
 
-    return sum_unmarked * bingo_nbr;
+    return (sum_unmarked * bingo_nbr, win_board_idx, bingo_idx);
+}
+
+fn part_2(boards: &Vec<Vec<Vec<u32>>>, mark_boards: &mut Vec<Vec<Vec<bool>>>, numbers: Vec<u32>) -> u32 {
+    let mut boards_cpy = boards.clone();
+    let mut numbers_cpy = numbers.clone();
+    let mut mark_boards_cpy = mark_boards.clone();
+    while boards_cpy.len() > 1 {
+        let score_board_next = part_1(&boards_cpy, &mut mark_boards_cpy, numbers_cpy.to_vec());
+        boards_cpy.remove(score_board_next.1);
+        numbers_cpy = numbers_cpy.split_off(score_board_next.2);
+        mark_boards_cpy.remove(score_board_next.1);
+    }
+
+    if boards_cpy.len() == 1 {
+        let fnl = part_1(&boards_cpy, &mut mark_boards_cpy, numbers_cpy.to_vec());
+        return fnl.0;
+    }
+
+    return 0;
 }
 
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
