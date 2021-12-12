@@ -19,7 +19,7 @@ fn main() {
         .split("\n")
         .collect();
 
-    let mut points: Vec<Point> = Vec::with_capacity(10000);
+    let mut points: &mut Vec<Point> = &mut Vec::with_capacity(10000);
 
     for vent in vents {
         let re = regex::Regex::new(r"->").unwrap();
@@ -34,47 +34,11 @@ fn main() {
             let xy_end: Vec<u32> = to_cartesian(coords[i + 1]);
             let (x2, y2): (u32, u32) = (xy_end[0], xy_end[1]);
             if x1 == x2 {
-                let mut start: u32 = y1;
-                let mut end: u32 = y2;
-                if y1 > y2 {
-                    start = y2;
-                    end = y1;
-                }
-                for y in start..=end {
-                    let mut found: bool = false;
-                    let p = Point { x: x1, y: y, count: 1 };
-                    for point in &mut points {
-                        if *point == p {
-                            found = true;
-                            point.count += 1;
-                            break;
-                        }
-                    }
-                    if !found {
-                        points.push(p);
-                    }
-                }
+                let (start, end): (u32, u32) = get_range(y1, y2);
+                update_floor((points, start, end, true, x1));
             } else if y1 == y2 {
-                let mut start: u32 = x1;
-                let mut end: u32 = x2;
-                if x1 > x2 {
-                    start = x2;
-                    end = x1;
-                }
-                for x in start..=end {
-                    let mut found: bool = false;
-                    let p = Point { x: x, y: y1, count: 1 };
-                    for point in &mut points {
-                        if *point == p {
-                            found = true;
-                            point.count += 1;
-                            break;
-                        }
-                    }
-                    if !found {
-                        points.push(p);
-                    }
-                }
+                let (start, end): (u32, u32) = get_range(x1, x2);
+                update_floor((points, start, end, false, y1));
             }
         } 
     }
@@ -98,4 +62,31 @@ fn to_cartesian(str_coords: &str) -> Vec<u32> {
             .split(",")
             .map(|s| s.parse::<u32>().unwrap())
             .collect();
+}
+
+fn get_range(start: u32, end: u32) -> (u32, u32) {
+    if start > end {
+       return (end, start);
+    }
+    return (start, end);
+}
+
+fn update_floor((points, start, end, is_y, orient): (&mut Vec<Point>, u32, u32, bool, u32)) -> () {
+    for c in start..=end {
+        let mut found: bool = false;
+        let mut p: Point = Point { x: c, y: orient, count: 1 };
+        if is_y {
+            p = Point { x: orient, y: c, count: 1 };
+        }
+        for point in points.iter_mut() {
+            if *point == p {
+                found = true;
+                point.count += 1;
+                break;
+            }
+        }
+        if !found {
+            points.push(p);
+        }
+    }
 }
