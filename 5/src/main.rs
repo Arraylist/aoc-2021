@@ -1,3 +1,4 @@
+#![feature(int_abs_diff)]
 use regex;
 
 #[derive(Debug)]
@@ -39,6 +40,21 @@ fn main() {
             } else if y1 == y2 {
                 let (start, end): (u32, u32) = get_range(x1, x2);
                 update_floor((points, start, end, false, y1));
+            } else if is_diag((x1 as i32, y1 as i32, x2 as i32, y2 as i32)) {
+                let diag_points = get_diag_points((x1 as i32, x2 as i32, y1 as i32, y2 as i32));
+                for diag_point in diag_points {
+                    let mut found: bool = false;
+                    for point in points.iter_mut() {
+                        if *point == diag_point {
+                            found = true;
+                            point.count += 1;
+                            break;
+                        }
+                    }
+                    if !found {
+                        points.push(diag_point);
+                    }
+                }
             }
         } 
     }
@@ -89,4 +105,24 @@ fn update_floor((points, start, end, is_y, orient): (&mut Vec<Point>, u32, u32, 
             points.push(p);
         }
     }
+}
+
+fn is_diag((x1, y1, x2, y2): (i32, i32, i32, i32)) -> bool {
+    return x1.abs_diff(x2) == y1.abs_diff(y2);
+}
+
+fn get_diag_points((x1, x2, y1, y2): (i32, i32, i32, i32)) -> Vec<Point> {
+    let mut points: Vec<Point> = Vec::with_capacity(200);
+    let y_diff = y2 - y1;
+    let x_diff = x2 - x1;
+    let m: i32 = y_diff / x_diff;
+    let c: i32 = y1 - m * x1;
+    
+    let (start, end) = get_range(x1 as u32, x2 as u32);
+
+    for x in start..=end {
+        points.push(Point { x: x as u32, y: (m * (x as i32) + c) as u32, count: 1 })
+    }
+
+    return points;
 }
