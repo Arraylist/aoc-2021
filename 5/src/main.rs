@@ -1,18 +1,13 @@
 #![feature(int_abs_diff)]
 use regex;
+use std::hash::{Hash};
+use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 struct Point {
     x: u32,
     y: u32,
-    count: u32,
 }
-impl PartialEq for Point {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y
-    }
-}
-impl Eq for Point {}
 
 fn main() {
     let mut vents: Vec<&str> = include_str!("./input.txt")
@@ -20,7 +15,7 @@ fn main() {
         .split("\n")
         .collect();
 
-    let mut points: &mut Vec<Point> = &mut Vec::with_capacity(10000);
+    let points: &mut HashMap<Point, u32> = &mut HashMap::new();
 
     for vent in vents {
         let re = regex::Regex::new(r"->").unwrap();
@@ -43,26 +38,16 @@ fn main() {
             } else if is_diag((x1 as i32, y1 as i32, x2 as i32, y2 as i32)) {
                 let diag_points = get_diag_points((x1 as i32, x2 as i32, y1 as i32, y2 as i32));
                 for diag_point in diag_points {
-                    let mut found: bool = false;
-                    for point in points.iter_mut() {
-                        if *point == diag_point {
-                            found = true;
-                            point.count += 1;
-                            break;
-                        }
-                    }
-                    if !found {
-                        points.push(diag_point);
-                    }
+                    incr_cnt_or_insert(points, diag_point);
                 }
             }
         } 
     }
 
     let danger_zone_cnt = points
-        .into_iter()
-        .fold(0, |accum, point| {
-            if point.count >= 2 {
+        .values()
+        .fold(0, |accum, cnt| {
+            if cnt >= &2 {
                 return accum + 1;
             } else {
                 return accum;
@@ -87,23 +72,21 @@ fn get_range(start: u32, end: u32) -> (u32, u32) {
     return (start, end);
 }
 
-fn update_floor((points, start, end, is_y, orient): (&mut Vec<Point>, u32, u32, bool, u32)) -> () {
+fn update_floor((points, start, end, is_y, orient): (&mut HashMap<Point, u32>, u32, u32, bool, u32)) -> () {
     for c in start..=end {
-        let mut found: bool = false;
-        let mut p: Point = Point { x: c, y: orient, count: 1 };
+        let mut p: Point = Point { x: c, y: orient};
         if is_y {
-            p = Point { x: orient, y: c, count: 1 };
+            p = Point { x: orient, y: c};
         }
-        for point in points.iter_mut() {
-            if *point == p {
-                found = true;
-                point.count += 1;
-                break;
-            }
-        }
-        if !found {
-            points.push(p);
-        }
+        incr_cnt_or_insert(points, p);
+    }
+}
+
+fn incr_cnt_or_insert(points: &mut HashMap<Point, u32>, p: Point) -> () {
+    if points.contains_key(&p) {
+        *points.get_mut(&p).unwrap() += 1;
+    } else {
+        points.insert(p, 1);
     }
 }
 
@@ -121,7 +104,7 @@ fn get_diag_points((x1, x2, y1, y2): (i32, i32, i32, i32)) -> Vec<Point> {
     let (start, end) = get_range(x1 as u32, x2 as u32);
 
     for x in start..=end {
-        points.push(Point { x: x as u32, y: (m * (x as i32) + c) as u32, count: 1 })
+        points.push(Point { x: x as u32, y: (m * (x as i32) + c) as u32})
     }
 
     return points;
