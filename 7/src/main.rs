@@ -9,14 +9,40 @@ fn main() {
 
     crabs_pos.sort();
 
-    println!("{}", part_1(crabs_pos));
+    println!("{}", part_1(&crabs_pos));
+    println!("{}", part_2(&crabs_pos));
 }
 
-fn part_1(crabs_pos: Vec<usize>) -> usize  {
-    return find_naive(crabs_pos);
+fn part_1(crabs_pos: &Vec<usize>) -> usize  {
+    return find_naive(&crabs_pos);
 }
 
-fn find_naive(crabs_pos: Vec<usize>) -> usize {
+fn part_2(crabs_pos: &Vec<usize>) -> usize  {
+    return find_naive_2(&crabs_pos);
+}
+
+fn find_naive_2(crabs_pos: &Vec<usize>) -> usize {
+    let mut least_total_fuel = usize::MAX;
+    for n in 0..=crabs_pos[crabs_pos.len() - 1] {
+        let curr = get_total_fuel_incr(&crabs_pos, n);
+        if curr < least_total_fuel {
+            least_total_fuel = curr;
+        }
+    }
+    return least_total_fuel;
+}
+
+fn get_total_fuel_incr(crabs_pos: &Vec<usize>, final_pos: usize) -> usize {
+    let mut sum = 0;
+    for crab_pos in crabs_pos {
+        for n in 1..=crab_pos.abs_diff(final_pos) {
+            sum += n;
+        };
+    }
+    return sum;
+}
+
+fn find_naive(crabs_pos: &Vec<usize>) -> usize {
     let mut least_total_fuel = usize::MAX;
     for n in 0..=crabs_pos[crabs_pos.len() - 1] {
         let curr = get_total_fuel(&crabs_pos, n);
@@ -27,7 +53,7 @@ fn find_naive(crabs_pos: Vec<usize>) -> usize {
     return least_total_fuel;
 }
 
- fn get_total_fuel(crabs_pos: &Vec<usize>, final_pos: usize) -> usize {
+fn get_total_fuel(crabs_pos: &Vec<usize>, final_pos: usize) -> usize {
     let mut sum = 0;
     for crab_pos in crabs_pos {
         sum += crab_pos.abs_diff(final_pos);
